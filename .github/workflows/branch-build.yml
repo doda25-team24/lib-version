@@ -21,7 +21,8 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
           server-id: github
-          settings-path: ${{ github.workspace }}
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
 
       - name: Get Base Version
         id: version
@@ -45,25 +46,9 @@ jobs:
           NEW_VERSION="${{ steps.version.outputs.clean_version }}-${{ steps.version.outputs.branch }}-${{ steps.version.outputs.timestamp }}"
           mvn versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
 
-      - name: Configure Maven for GitHub Packages
+      - name: Deploy to GitHub Packages
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<EOF
-          <settings>
-            <servers>
-              <server>
-                <id>github</id>
-                <username>${GITHUB_ACTOR}</username>
-                <password>${GITHUB_TOKEN}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-          echo "Settings file created"
-
-      - name: Deploy to GitHub Packages
-        run: mvn deploy -s ~/.m2/settings.xml -DskipTests
+        run: mvn deploy -DskipTests
 
