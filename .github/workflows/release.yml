@@ -35,14 +35,11 @@ jobs:
                   <servers>
                     <server>
                       <id>github</id>
-                      <username>${GITHUB_ACTOR}</username>
-                      <password>${GITHUB_TOKEN}</password>
+                      <username>\${env.MAVEN_USERNAME}</username>
+                      <password>\${env.MAVEN_PASSWORD}</password>
                     </server>
                   </servers>
                 </settings>" > ~/.m2/settings.xml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
 
       - name: Prepare and Deploy Stable Release
         run: |
@@ -56,7 +53,10 @@ jobs:
           mvn versions:set -DnewVersion=$RELEASE_VERSION -DgenerateBackupPoms=false
           
           # 4. Deploy
-          mvn deploy
+          mvn deploy -DskipTests
+        env:
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           
           # 5. add Tag 
           # "The release workflows create a new commit and tag it with a version."
