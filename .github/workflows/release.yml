@@ -1,0 +1,77 @@
+name: Stable Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          server-id: github
+          settings-path: ${{ github.workspace }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Prepare and Deploy Stable Release
+        run: |
+          # 1. Get current version (e.g. 1.2.3-SNAPSHOT)
+          CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          
+          # 2. Strip -SNAPSHOT
+          RELEASE_VERSION=${CURRENT_VERSION%-SNAPSHOT}
+          
+          # 3. Set version to stable
+          mvn versions:set -DnewVersion=$RELEASE_VERSION -DgenerateBackupPoms=false
+          
+          # 4. Deploy
+          mvn deploy -s ${{ github.workspace }}/settings.xml
+          
+          # 5. add Tag 
+          # "The release workflows create a new commit and tag it with a version."
+          git add pom.xml
+          git commit -m "Release version $RELEASE_VERSION"
+          git tag v$RELEASE_VERSION
+          git push origin v$RELEASE_VERSION
+          
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare Next Development Iteration
+        run: |
+          # Parse RELEASE_VERSION from previous step or re-evaluate
+          CURRENT_STABLE=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          
+          # Split version to increment patch
+          IFS='.' read -r -a parts <<< "$CURRENT_STABLE"
+          major=${parts[0]}
+          minor=${parts[1]}
+          patch=${parts[2]}
+          
+          new_patch=$((patch + 1))
+          NEXT_SNAPSHOT="$major.$minor.$new_patch-SNAPSHOT"
+          
+          # Set new version
+          mvn versions:set -DnewVersion=$NEXT_SNAPSHOT -DgenerateBackupPoms=false
+          
+          git add pom.xml
+          git commit -m "Prep next iteration: $NEXT_SNAPSHOT"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
