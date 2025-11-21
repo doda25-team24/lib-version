@@ -55,7 +55,7 @@ jobs:
           mvn versions:set -DnewVersion=$RELEASE_VERSION -DgenerateBackupPoms=false
           
           # 4. Deploy
-          MAVEN_USERNAME="${{ github.actor }}" MAVEN_PASSWORD="${{ secrets.GITHUB_TOKEN }}" mvn deploy -DskipTests
+          mvn deploy -s ~/.m2/settings.xml -DskipTests
           
           # 5. add Tag 
           git add pom.xml
