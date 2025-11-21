@@ -59,10 +59,5 @@ jobs:
                 </settings>" > ~/.m2/settings.xml
 
       - name: Deploy to GitHub Packages
-        run: mvn deploy -DskipTests
-        env:
-          MAVEN_USERNAME: ${{ github.actor }}
-          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: MAVEN_USERNAME="${{ github.actor }}" MAVEN_PASSWORD="${{ secrets.GITHUB_TOKEN }}" mvn deploy -DskipTests
 
