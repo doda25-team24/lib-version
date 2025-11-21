@@ -61,5 +61,5 @@ jobs:
           EOF
 
       - name: Deploy to GitHub Packages
-        run: mvn deploy -DskipTests
+        run: mvn deploy -s ~/.m2/settings.xml -DskipTests
 
