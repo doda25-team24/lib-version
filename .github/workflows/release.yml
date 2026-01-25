@@ -48,11 +48,8 @@ jobs:
           
           # 5. add Tag 
           git add pom.xml
-          git commit -m "Release version $RELEASE_VERSION"
-          RELEASE_COMMIT=$(git rev-parse HEAD)
-
-          git push origin $RELEASE_COMMIT
-          git tag v$RELEASE_VERSION $RELEASE_COMMIT
+          git commit --allow-empty -m "Release version $RELEASE_VERSION"
+          git tag v$RELEASE_VERSION
           git push origin v$RELEASE_VERSION
 
       - name: Prepare Next Development Iteration
